@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-009",
+  "type": "feat",
+  "description": "Implement Settings screen: user can configure electricity rate (PHP/kWh, default 12.0), view About section explaining CalWatt and SDG 7 purpose, view estimation limitations disclaimer. Also implement unit tests for CalculationService formulas, run flutter analyze to fix all lint issues, verify all screens work end-to-end, and build Android APK if environment supports it. Depends on FEAT-003 storage, FEAT-005 dashboard refresh.",
+  "status": "pending",
+  "steps": [
+    "Implement SettingsScreen in lib/screens/settings_screen.dart",
+    "Add TextFormField for electricity rate with label 'Electricity Rate (PHP/kWh)', default value 12.0, validation: > 0, save button",
+    "On save, call StorageService.setElectricityRate() and notify AppState to trigger app-wide recalculation",
+    "Add 'About CalWatt' section: heading + paragraph describing app purpose aligned with SDG 7: 'CalWatt helps households in the Philippines estimate and optimize their electricity consumption to promote affordable and clean energy usage. By understanding appliance energy consumption, users can make informed decisions to reduce costs and environmental impact.'",
+    "Add 'Estimation Limitations' section: heading + disclaimer text: 'All calculations are estimates based on nameplate wattage and configured operating hours. Actual electricity consumption depends on device efficiency, usage patterns, and environmental factors. Your actual electricity bill may differ from these estimates. This app does not interface with physical meters or provide real-time monitoring.'",
+    "Create test/services/test_calculation_service.dart (if not created in FEAT-002) with unit tests: test kWFromWatts (70W -> 0.07 kW), test kWhFromKwAndHours (0.1 kW * 8 hours -> 0.8 kWh), test costFromKwhAndRate (0.8 kWh * 12 PHP/kWh -> 9.6 PHP), test monthly projection (daily * 30), test household aggregation (sum of multiple appliances), test invalid inputs rejected",
+    "Run: flutter test test/services/test_calculation_service.dart — verify all tests pass",
+    "Run: flutter analyze — fix all errors and warnings in lib/ and test/ (ignore build/, android/, ios/, web/*, windows/*, macos/*, linux/* as per analysis_options.yaml)",
+    "Run: flutter build apk --release (or verify this command succeeds, even if emulator not available; document if blocker encountered)",
+    "Record any findings in FEAT-009.findings about what could not be verified on Windows environment"
+  ],
+  "acceptance_criteria": [
+    "Settings screen allows user to change electricity rate",
+    "Rate change updates all screens immediately (Dashboard, Analytics)",
+    "About section explains CalWatt and SDG 7 alignment",
+    "Estimation Limitations section clearly displayed",
+    "Unit tests for CalculationService pass with > 80% coverage",
+    "Flutter analyze shows 0 errors in lib/ and test/",
+    "All 4 screens (Dashboard, Appliances, Analytics, Settings) functional and navigable",
+    "Bottom nav bar switches between all 4 screens",
+    "Sample appliances persist across app restart",
+    "What-If simulator integrated and working"
+  ],
+  "verification": [
+    "Run: flutter test — all tests pass",
+    "Run: flutter analyze lib/ test/ — no errors or warnings",
+    "Run: flutter run and manually verify: navigate all 4 tabs, change electricity rate in Settings, return to Dashboard and verify cost updated, add a new appliance, restart app, verify appliance still present, toggle appliance ON/OFF and see Dashboard update, use what-if simulator to change hours and verify comparison, check Analytics charts update"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement ApplianceService for CRUD operations and StorageService for SharedPreferences persistence. Load/save appliances and electricity rate. Create 6 sample appliances on first run. Depends on FEAT-001 models.",
+  "status": "completed",
+  "steps": [
+    "Create lib/services/storage_service.dart - manages SharedPreferences for appliances (key: 'appliances' as JSON list), electricity rate (key: 'electricity_rate', default 12.0 PHP/kWh), initialization",
+    "Implement StorageService.loadAppliances() - reads from SharedPreferences, parses JSON, returns List<Appliance>",
+    "Implement StorageService.saveAppliances(List<Appliance>) - writes to SharedPreferences as JSON",
+    "Implement StorageService.getElectricityRate() - returns rate or default 12.0",
+    "Implement StorageService.setElectricityRate(double) - saves rate",
+    "Implement StorageService.clearAll() - for testing",
+    "Create lib/services/appliance_service.dart - manages appliance CRUD using StorageService",
+    "Implement ApplianceService.addAppliance(Appliance) - generates UUID, saves",
+    "Implement ApplianceService.updateAppliance(Appliance) - replaces existing, saves",
+    "Implement ApplianceService.deleteAppliance(String id) - removes, saves",
+    "Implement ApplianceService.getAll() - returns current list",
+    "Implement ApplianceService.getById(String id) - returns single appliance",
+    "Implement ApplianceService.initializeSampleAppliances() - creates 6 sample appliances (fan 70W, light 15W, TV 100W, refrigerator 150W, rice cooker 1000W, AC 2500W) with default schedules (7 days, 4-8 hours)",
+    "Create pub/uuid dependency in pubspec.yaml for ID generation",
+    "Create shared_preferences dependency in pubspec.yaml"
+  ],
+  "acceptance_criteria": [
+    "StorageService saves and loads appliances persistently",
+    "ApplianceService provides full CRUD",
+    "Default electricity rate is 12.0 PHP/kWh",
+    "Sample appliances initialized on first run with realistic wattages and schedules",
+    "All appliance changes persisted to SharedPreferences",
+    "Flutter analyze shows no errors in service files"
+  ],
+  "verification": [
+    "Run: flutter pub get — dependencies added (uuid, shared_preferences)",
+    "Run: flutter analyze lib/services/storage_service.dart lib/services/appliance_service.dart — no errors",
+    "Manually verify: create a simple test widget that loads, prints appliances from storage to console, see 6 sample appliances logged"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

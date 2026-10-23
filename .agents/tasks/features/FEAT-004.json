@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Set up Material 3 theme (green #10B981 as primary, white and neutral colors), app-wide state management with provider, and main navigation structure with bottom nav bar (Dashboard, Appliances, Analytics, Settings). Depends on FEAT-002 services and FEAT-003 storage.",
+  "status": "completed",
+  "steps": [
+    "Add provider dependency to pubspec.yaml (^6.0.0 or latest)",
+    "Create lib/theme/app_theme.dart - define Material 3 theme with ColorScheme.fromSeed(seedColor: Color(0xFF10B981)) for green, white background, neutral gray for accents, configure TextTheme with Material 3 defaults",
+    "Create lib/providers/app_state.dart - ChangeNotifier that holds electricity rate, appliances list, current selected tab, notifies listeners on changes",
+    "Create lib/screens/dashboard_screen.dart - placeholder StatelessWidget (to be implemented in FEAT-005)",
+    "Create lib/screens/appliances_screen.dart - placeholder StatelessWidget",
+    "Create lib/screens/analytics_screen.dart - placeholder StatelessWidget",
+    "Create lib/screens/settings_screen.dart - placeholder StatelessWidget",
+    "Rewrite lib/main.dart: use MaterialApp with theme from app_theme.dart, MultiProvider wrapper with AppState provider, home widget with bottom nav bar (BottomNavigationBar with 4 items: Dashboard, Appliances, Analytics, Settings icons)",
+    "Implement bottom nav tab switching logic that displays corresponding screen",
+    "Add Material Icons dependency (already in cupertino_icons, use Icons class)"
+  ],
+  "acceptance_criteria": [
+    "Theme uses green #10B981 as primary color",
+    "Bottom nav bar displays 4 tabs with correct icons and labels",
+    "Tapping tabs switches between screen placeholders",
+    "AppState provider initialized with sample appliances from ApplianceService",
+    "All screen files created and imported",
+    "Flutter analyze shows no errors"
+  ],
+  "verification": [
+    "Run: flutter pub get — provider added",
+    "Run: flutter analyze lib/theme/ lib/providers/ lib/screens/ lib/main.dart — no errors",
+    "Run: flutter run (or build) and manually verify: app launches, bottom nav bar visible with 4 tabs, tapping each tab switches screens"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

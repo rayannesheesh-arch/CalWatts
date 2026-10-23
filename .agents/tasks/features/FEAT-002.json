@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement CalculationService with all energy and cost formulas. This service is business logic separated from UI and used by dashboard, analytics, and what-if simulator. Depends on FEAT-001 models.",
+  "status": "completed",
+  "steps": [
+    "Create lib/services/calculation_service.dart",
+    "Implement static methods: kWFromWatts(watts), kWhFromKwAndHours(kw, hours), costFromKwhAndRate(kwh, rate)",
+    "Implement calculateDailyConsumptionKwh(appliance, rate) - returns EnergyCalculation",
+    "Implement calculateMonthlySavings(original EnergyCalculation, proposed EnergyCalculation) - returns map with original, proposed, savings values",
+    "Implement getHouseholdDaily(applianceList, rate) - sums all appliance daily consumption",
+    "Implement getHouseholdMonthly(applianceList, rate) - projects monthly (daily * 30)",
+    "Implement calculateWattageFromVoltageAndCurrent(voltage, current)",
+    "Add input validation: watts > 0, hours >= 0 and <= 24, rate > 0",
+    "Write unit tests in test/services/test_calculation_service.dart: test each formula, validate inputs, test household aggregation"
+  ],
+  "acceptance_criteria": [
+    "CalculationService exists at lib/services/calculation_service.dart",
+    "All 8 methods implemented with correct formulas: kW=W/1000, kWh=kW*hours, cost=kWh*rate",
+    "Daily * 30 = Monthly",
+    "Input validation rejects invalid values (negative, zero rate, hours > 24)",
+    "Unit tests in test/services/test_calculation_service.dart pass",
+    "Flutter analyze shows no errors in service file"
+  ],
+  "verification": [
+    "Run: flutter test test/services/test_calculation_service.dart — all tests pass, coverage > 80%",
+    "Run: flutter analyze lib/services/calculation_service.dart — no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

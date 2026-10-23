@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-007",
+  "type": "feat",
+  "description": "Implement Analytics screen with 4 interactive charts using fl_chart: daily consumption bar chart (estimated daily kWh), monthly projection line chart (estimated monthly kWh), consumption by appliance pie chart, and cost by appliance bar chart. All charts use actual calculated data and update when appliances or rate change. Label all as estimates. Depends on FEAT-002 calculations, FEAT-005 dashboard values.",
+  "status": "pending",
+  "steps": [
+    "Add fl_chart dependency to pubspec.yaml (^6.1.0 or latest for Material 3 support)",
+    "Create lib/widgets/daily_consumption_chart.dart - BarChart showing estimated daily kWh for each day of week (Mon-Sun), pre-calculated for each day assuming appliances run per schedule, sample data if no appliances",
+    "Create lib/widgets/monthly_projection_chart.dart - LineChart showing estimated monthly consumption trend over 4 weeks (or 30 days), calculated as daily * number of weeks, with clear 'Estimate' label",
+    "Create lib/widgets/consumption_by_appliance_chart.dart - PieChart showing each appliance's share of daily kWh consumption, only show appliances with isOn=true",
+    "Create lib/widgets/cost_by_appliance_chart.dart - BarChart showing estimated daily cost contribution by each appliance (sorted descending), use green color for bars",
+    "Implement AnalyticsScreen in lib/screens/analytics_screen.dart",
+    "Layout: SingleChildScrollView with GridView or Column of 4 chart widgets, each wrapped in Card",
+    "Use Consumer<AppState> to listen for appliance/rate changes",
+    "Recalculate chart data on every build when AppState changes",
+    "Add 'Last Updated' timestamp at bottom",
+    "Add disclaimer: 'All values are estimates. Actual electricity consumption may vary based on usage patterns and device efficiency.'"
+  ],
+  "acceptance_criteria": [
+    "All 4 chart types rendered correctly using fl_chart",
+    "Charts display calculated data from actual appliances",
+    "Charts labeled clearly as 'Estimate' or 'Projected'",
+    "Charts are interactive (tap to see values, if fl_chart supports)",
+    "Charts update when appliance ON/OFF status changes",
+    "Charts update when electricity rate changes",
+    "Charts use Material 3 colors (green accent)",
+    "Pie chart only shows ON appliances",
+    "Bar and line charts have axis labels and legends",
+    "Disclaimer visible on screen",
+    "Flutter analyze shows no errors"
+  ],
+  "verification": [
+    "Run: flutter pub get — fl_chart added",
+    "Run: flutter analyze lib/widgets/daily_consumption_chart.dart lib/widgets/monthly_projection_chart.dart lib/widgets/consumption_by_appliance_chart.dart lib/widgets/cost_by_appliance_chart.dart lib/screens/analytics_screen.dart — no errors",
+    "Run: flutter run and manually verify: Analytics tab displays 4 charts with data, toggle appliance ON/OFF on Dashboard, switch to Analytics tab and see chart data update, verify disclaimer text visible"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

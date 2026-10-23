@@ -1,0 +1,20 @@
+{
+  "project_type": "Flutter/Dart Android mobile app",
+  "language": "Dart",
+  "build_system": "Flutter (version ^3.13.4)",
+  "test_framework": "flutter_test (widget and unit tests)",
+  "build_command": "flutter build apk --release",
+  "test_command": "flutter test",
+  "verification_instructions": "Run 'flutter analyze' to check for lint errors. Run 'flutter test' to run all unit and widget tests. Run 'flutter build apk --release' to build the Android APK if all tests pass. On Windows, use flutter doctor to verify Android SDK setup.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Windows development machine. Android SDK required for build verification. No backend or IoT integration.",
+  "contribution_requirements": "All code must follow Dart/Flutter conventions. Use provider for state management. Keep calculation logic separate from UI. All models must be immutable (final fields). Use const constructors where possible. Follow Material Design 3 guidelines.",
+  "key_patterns": "Flutter boilerplate uses stateful widgets. Material App with theme configuration. Themes use ColorScheme.fromSeed. Standard MaterialApp with routes for navigation. Use pubspec.yaml for dependency management.",
+  "relevant_files": [
+    "lib/main.dart",
+    "pubspec.yaml",
+    "test/widget_test.dart",
+    "analysis_options.yaml"
+  ],
+  "directory_structure": "lib/ - main application code (to be structured into models/, services/, screens/, widgets/); test/ - unit and widget tests; android/ - Android build configuration; ios/ - iOS build configuration; .agents/tasks/ - planning and review artifacts"
+}

@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-008",
+  "type": "feat",
+  "description": "Implement What-If Savings Simulator: allow users to simulate turning an appliance off or changing operating hours WITHOUT saving changes. Display comparison: original vs proposed energy consumption (daily and monthly), original vs proposed cost, potential savings. Include Apply and Cancel buttons. Depends on FEAT-002 calculations, FEAT-003 appliances, FEAT-006 appliance list.",
+  "status": "pending",
+  "steps": [
+    "Create lib/screens/whatif_simulator_screen.dart",
+    "Add to bottom nav or accessible from Dashboard/Appliances (as a new tab or dialog)",
+    "Implement UI: dropdown to select an appliance from current list, radio/toggle buttons: 'Turn Off' or 'Change Hours', conditional TextField for new hours",
+    "On change, calculate proposed scenario using CalculationService WITHOUT modifying original appliance",
+    "Display comparison in 2-column or card layout: 'Original vs Proposed'",
+    "Show: daily kWh (original, proposed, diff), daily PHP cost (original, proposed, diff), monthly kWh (original, proposed, diff), monthly PHP (original, proposed, diff), percentage savings",
+    "Highlight savings in green",
+    "Implement two buttons: 'Apply Changes' and 'Cancel'",
+    "Apply: updates appliance via ApplianceService if user confirms, triggers app-wide update",
+    "Cancel: discards simulation, returns to previous screen without changes",
+    "Add confirmation dialog before applying: 'This will update the appliance settings. Continue?'"
+  ],
+  "acceptance_criteria": [
+    "User can select an appliance from dropdown",
+    "User can choose 'Turn Off' or 'Change Hours'",
+    "When 'Change Hours' selected, hours field appears and accepts input",
+    "Proposed scenario calculated correctly without modifying original",
+    "Comparison displayed: original, proposed, savings for both kWh and PHP",
+    "Savings shown in green, clearly visible",
+    "Apply button saves changes and updates app state",
+    "Cancel button discards changes",
+    "Confirmation dialog appears before applying",
+    "After applying, screen shows confirmation and updates persist"
+  ],
+  "verification": [
+    "Run: flutter analyze lib/screens/whatif_simulator_screen.dart — no errors",
+    "Run: flutter run and manually verify: open simulator, select a fan (70W), choose 'Change Hours' to 2 hours, see original vs proposed consumption and cost calculated correctly, verify savings shown, click Apply, confirm dialog, appliance hours updated and persisted, verify Dashboard now shows new consumption; repeat test with 'Turn Off' option"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-005",
+  "type": "feat",
+  "description": "Implement Dashboard screen showing: daily kWh, daily cost PHP, monthly kWh projection, monthly cost PHP, total appliances count, appliance cards with ON/OFF toggles. All values auto-update when appliances, schedules, statuses, or rate change. Depends on FEAT-002 calculations, FEAT-003 storage, FEAT-004 state management.",
+  "status": "completed",
+  "steps": [
+    "Create lib/widgets/stat_card.dart - reusable card showing a metric (icon, label, large value with unit). Use consistent Material 3 styling, white background, subtle shadow, green accent.",
+    "Create lib/widgets/appliance_card.dart - card showing appliance name, category icon, current wattage, ON/OFF toggle, calculated daily kWh and cost. Toggle changes appliance.isOn state.",
+    "Implement DashboardScreen in lib/screens/dashboard_screen.dart as StatefulWidget or Consumer<AppState> if using provider",
+    "Fetch AppState (appliances, rate) using provider Consumer or watch()",
+    "Calculate using CalculationService: household daily kWh, household daily PHP, household monthly kWh (daily*30), household monthly PHP (daily*30)",
+    "Count total appliances from AppState.appliances",
+    "Display 4 stat cards: daily kWh, daily PHP, monthly kWh, monthly PHP using stat_card.dart",
+    "Display 'Total Appliances' count",
+    "Display scrollable list of appliance_card widgets for each appliance",
+    "Wrap entire content in SingleChildScrollView for mobile",
+    "Wrap appliance ON/OFF toggle to update AppState.appliances and trigger persistence",
+    "Add auto-refresh: use FutureBuilder or Timer to recalculate when rate changes (AppState listener)"
+  ],
+  "acceptance_criteria": [
+    "Dashboard displays 4 metric cards: daily kWh, daily PHP, monthly kWh, monthly PHP",
+    "All values calculated using CalculationService from actual appliance data",
+    "Appliance cards show wattage, ON/OFF toggle, and calculated per-appliance consumption",
+    "Toggling appliance ON/OFF updates the state and recalculates all metrics immediately",
+    "Changing electricity rate (in Settings) updates all displayed costs immediately",
+    "Values are labeled as estimates (e.g., 'Est. Daily Consumption')",
+    "UI uses Material 3 theme with green accent",
+    "Flutter analyze shows no errors, no console warnings"
+  ],
+  "verification": [
+    "Run: flutter analyze lib/screens/dashboard_screen.dart lib/widgets/ — no errors",
+    "Run: flutter run and manually verify: Dashboard tab displays correct metrics, toggle a fan ON/OFF and see daily kWh/cost update, navigate to Settings and change rate, return to Dashboard and see costs recalculated"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

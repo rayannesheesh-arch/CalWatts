@@ -1,0 +1,17 @@
+{
+  "task_id": "task-calwatt-complete",
+  "task_description": "Build a complete, functional Android Flutter app CalWatt aligned with SDG 7 (Affordable and Clean Energy). Implement real working features including appliance management, energy calculations, dashboard with auto-updating metrics, analytics charts, what-if simulator, and persistent storage. All values must be calculated from actual data, not mocked.",
+  "status": "pending",
+  "feature_order": [
+    "FEAT-001",
+    "FEAT-002",
+    "FEAT-003",
+    "FEAT-004",
+    "FEAT-005",
+    "FEAT-006",
+    "FEAT-007",
+    "FEAT-008",
+    "FEAT-009"
+  ],
+  "blocked_reason": null
+}

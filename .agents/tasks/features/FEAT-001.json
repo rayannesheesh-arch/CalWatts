@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create core models (Appliance, ApplianceCategory, EnergyCalculation) with immutable structures. These models are the foundation for all features and must support serialization for storage.",
+  "status": "completed",
+  "steps": [
+    "Create lib/models/appliance_category.dart with enum: fan, light, television, refrigerator, rice_cooker, air_conditioner",
+    "Create lib/models/appliance.dart with immutable Appliance class (id, name, category, wattage, voltage optional, current optional, dailyOperatingHours, operatingDays schedule M-Su bools, isOn simulated status, createdAt)",
+    "Create lib/models/energy_calculation.dart with EnergyCalculation class (dailyConsumptionKwh, dailyCostPhp, monthlyConsumptionKwh, monthlyCostPhp, appliance reference)",
+    "Add copyWith methods to enable immutable updates",
+    "Create toJson/fromJson methods in all models for SharedPreferences storage"
+  ],
+  "acceptance_criteria": [
+    "All three model files exist in lib/models/",
+    "Appliance is immutable (final fields, const constructor)",
+    "ApplianceCategory enum covers all 6 appliance types",
+    "EnergyCalculation stores calculation results",
+    "Models include toJson and fromJson for storage",
+    "Flutter analyze shows no errors or warnings in model files"
+  ],
+  "verification": [
+    "Run: flutter analyze lib/models/ — should show no errors",
+    "Run: flutter test —dry-run to confirm test infrastructure sees model files (no test file needed yet)"
+  ],
+  "blocked_reason": null,
+  "findings": "All three model files created successfully with immutable structures, const constructors, copyWith methods, and JSON serialization (toJson/fromJson). ApplianceCategory enum covers all 6 required appliance types (fan, light, television, refrigerator, riceCooker, airConditioner). Appliance model includes all required fields: id, name, category, wattage, optional voltage/current, dailyOperatingHours, operatingDays (M-Su bool list), isOn status, and createdAt timestamp. EnergyCalculation model stores calculation results for daily/monthly kWh and PHP costs. All models follow Dart/Flutter conventions with proper documentation. Models committed to git repository with message 'feat(models): core appliance and calculation models'."
+}

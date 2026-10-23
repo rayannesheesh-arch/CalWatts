@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-006",
+  "type": "feat",
+  "description": "Implement Appliances screen with full CRUD: display list of appliances, add new, edit existing, delete with confirmation. Each appliance edit form includes: name, category dropdown, wattage, voltage, current, daily hours, operating days (M-Su checkboxes), ON/OFF toggle. Depends on FEAT-003 ApplianceService, FEAT-004 navigation.",
+  "status": "completed",
+  "steps": [
+    "Create lib/screens/add_edit_appliance_screen.dart - modal/new page for CRUD",
+    "Implement form fields: TextFormField for name, DropdownButton for category (fan, light, TV, refrigerator, rice cooker, AC), TextFormField for wattage (validation: > 0), optional voltage and current TextFormFields, TextFormField for dailyOperatingHours (0-24 validation), Row of 7 CheckBox for operating days (Mon-Sun), Switch for ON/OFF status",
+    "Add 'Calculate Wattage' button that computes watts from voltage*current if both provided",
+    "Implement form validation and error messages",
+    "On save: if id exists, update appliance via ApplianceService; otherwise add new",
+    "Rewrite ApplancesScreen in lib/screens/appliances_screen.dart",
+    "Display ListView of appliances with ListTile or custom card per appliance",
+    "Each item shows: name, category icon, wattage",
+    "Add action buttons: Edit (opens add_edit_appliance_screen in edit mode), Delete (shows confirmation dialog)",
+    "Floating Action Button to add new appliance",
+    "On delete confirmation, remove via ApplianceService and refresh UI"
+  ],
+  "acceptance_criteria": [
+    "Add new appliance: form works, saves to storage, appears in list",
+    "Edit appliance: form prefills current values, save updates storage and list",
+    "Delete appliance: confirmation dialog shown, appliance removed from list and storage",
+    "Form validation: wattage required and > 0, hours 0-24, name required",
+    "Voltage/current optional but if both provided, 'Calculate Wattage' button computes watts",
+    "Category dropdown shows all 6 appliance types",
+    "Operating days checkboxes work (M-Su)",
+    "All changes persisted via ApplianceService to SharedPreferences",
+    "Flutter analyze shows no errors"
+  ],
+  "verification": [
+    "Run: flutter analyze lib/screens/appliances_screen.dart lib/screens/add_edit_appliance_screen.dart — no errors",
+    "Run: flutter run and manually verify: tap '+' FAB, fill form, save, see appliance in list; tap edit, change name, save, see update; tap delete, confirm, appliance removed; restart app and verify appliance still there (persistence)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
