@@ -2,7 +2,7 @@
   "id": "FEAT-007",
   "type": "feat",
   "description": "Implement Analytics screen with 4 interactive charts using fl_chart: daily consumption bar chart (estimated daily kWh), monthly projection line chart (estimated monthly kWh), consumption by appliance pie chart, and cost by appliance bar chart. All charts use actual calculated data and update when appliances or rate change. Label all as estimates. Depends on FEAT-002 calculations, FEAT-005 dashboard values.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Add fl_chart dependency to pubspec.yaml (^6.1.0 or latest for Material 3 support)",
     "Create lib/widgets/daily_consumption_chart.dart - BarChart showing estimated daily kWh for each day of week (Mon-Sun), pre-calculated for each day assuming appliances run per schedule, sample data if no appliances",
