@@ -6,6 +6,7 @@ import 'package:calwatt/screens/dashboard_screen.dart';
 import 'package:calwatt/screens/appliances_screen.dart';
 import 'package:calwatt/screens/analytics_screen.dart';
 import 'package:calwatt/screens/settings_screen.dart';
+import 'package:calwatt/screens/whatif_simulator_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,7 @@ class _HomePageState extends State<HomePage> {
             children: const [
               DashboardScreen(),
               AppliancesScreen(),
+              WhatIfSimulatorScreen(),
               AnalyticsScreen(),
               SettingsScreen(),
             ],
@@ -97,6 +99,11 @@ class _HomePageState extends State<HomePage> {
                 icon: Icon(Icons.devices_outlined),
                 activeIcon: Icon(Icons.devices),
                 label: 'Appliances',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calculate_outlined),
+                activeIcon: Icon(Icons.calculate),
+                label: 'What-If',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.analytics_outlined),
