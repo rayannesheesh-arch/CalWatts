@@ -2,7 +2,7 @@
   "id": "FEAT-008",
   "type": "feat",
   "description": "Implement What-If Savings Simulator: allow users to simulate turning an appliance off or changing operating hours WITHOUT saving changes. Display comparison: original vs proposed energy consumption (daily and monthly), original vs proposed cost, potential savings. Include Apply and Cancel buttons. Depends on FEAT-002 calculations, FEAT-003 appliances, FEAT-006 appliance list.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create lib/screens/whatif_simulator_screen.dart",
     "Add to bottom nav or accessible from Dashboard/Appliances (as a new tab or dialog)",
