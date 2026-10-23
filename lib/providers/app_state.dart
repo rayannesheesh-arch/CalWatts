@@ -39,8 +39,8 @@ class AppState extends ChangeNotifier {
     // Load appliances from storage
     _appliances = await ApplianceService.getAll();
 
-    // Load electricity rate from storage (default to 0 if not set)
-    _electricityRate = await StorageService.loadElectricityRate();
+    // Load electricity rate from storage (default to 12.0 if not set)
+    _electricityRate = await StorageService.getElectricityRate();
 
     _isInitialized = true;
     notifyListeners();
@@ -101,7 +101,7 @@ class AppState extends ChangeNotifier {
   Future<void> setElectricityRate(double rate) async {
     if (_electricityRate != rate) {
       _electricityRate = rate;
-      await StorageService.saveElectricityRate(rate);
+      await StorageService.setElectricityRate(rate);
       notifyListeners();
     }
   }
