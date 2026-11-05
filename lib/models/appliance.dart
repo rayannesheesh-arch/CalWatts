@@ -1,43 +1,21 @@
 import 'package:calwatt/models/appliance_category.dart';
 
-/// Immutable model representing a household appliance.
-///
-/// This class stores all information about an appliance including its power
-/// specifications, operating schedule, and current status. All fields are final
-/// to ensure immutability.
+/// Immutable model representing an electrical appliance.
 class Appliance {
-  /// Unique identifier for the appliance.
   final String id;
-
-  /// User-friendly name of the appliance (e.g., "Living Room Fan").
   final String name;
-
-  /// Category/type of appliance.
   final ApplianceCategory category;
-
-  /// Power consumption in watts.
   final double wattage;
-
-  /// Optional voltage in volts (for voltage/current-based wattage estimation).
   final double? voltage;
-
-  /// Optional current in amperes (for voltage/current-based wattage estimation).
   final double? current;
-
-  /// Expected daily operating hours for this appliance.
   final double dailyOperatingHours;
-
-  /// Operating schedule: whether the appliance operates on each day of the week.
-  /// Index 0 = Monday, Index 6 = Sunday
   final List<bool> operatingDays;
-
-  /// Simulated ON/OFF status of the appliance.
   final bool isOn;
-
-  /// Timestamp when the appliance record was created.
   final DateTime createdAt;
 
-  /// Creates an immutable Appliance instance.
+  /// Number of identical units currently running (for dashboard quantity management).
+  final int quantity;
+
   const Appliance({
     required this.id,
     required this.name,
@@ -49,9 +27,9 @@ class Appliance {
     required this.operatingDays,
     required this.isOn,
     required this.createdAt,
+    this.quantity = 1,
   });
 
-  /// Creates a copy of this appliance with optional field overrides.
   Appliance copyWith({
     String? id,
     String? name,
@@ -63,6 +41,7 @@ class Appliance {
     List<bool>? operatingDays,
     bool? isOn,
     DateTime? createdAt,
+    int? quantity,
   }) {
     return Appliance(
       id: id ?? this.id,
@@ -75,10 +54,10 @@ class Appliance {
       operatingDays: operatingDays ?? this.operatingDays,
       isOn: isOn ?? this.isOn,
       createdAt: createdAt ?? this.createdAt,
+      quantity: quantity ?? this.quantity,
     );
   }
 
-  /// Converts this appliance to a JSON-compatible map for storage.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -91,10 +70,10 @@ class Appliance {
       'operatingDays': operatingDays,
       'isOn': isOn,
       'createdAt': createdAt.toIso8601String(),
+      'quantity': quantity,
     };
   }
 
-  /// Creates an appliance from a JSON map (e.g., from storage).
   static Appliance fromJson(Map<String, dynamic> json) {
     return Appliance(
       id: json['id'] as String,
@@ -107,44 +86,20 @@ class Appliance {
       operatingDays: List<bool>.from(json['operatingDays'] as List),
       isOn: json['isOn'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      quantity: (json['quantity'] as int?) ?? 1,
     );
   }
 
   @override
-  String toString() {
-    return 'Appliance(id: $id, name: $name, category: $category, wattage: $wattage, isOn: $isOn)';
-  }
+  String toString() =>
+      'Appliance(id: $id, name: $name, category: $category, wattage: $wattage, isOn: $isOn, qty: $quantity)';
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-
-    return other is Appliance &&
-        other.id == id &&
-        other.name == name &&
-        other.category == category &&
-        other.wattage == wattage &&
-        other.voltage == voltage &&
-        other.current == current &&
-        other.dailyOperatingHours == dailyOperatingHours &&
-        other.operatingDays == operatingDays &&
-        other.isOn == isOn &&
-        other.createdAt == createdAt;
+    return other is Appliance && other.id == id;
   }
 
   @override
-  int get hashCode {
-    return Object.hash(
-      id,
-      name,
-      category,
-      wattage,
-      voltage,
-      current,
-      dailyOperatingHours,
-      Object.hashAll(operatingDays),
-      isOn,
-      createdAt,
-    );
-  }
+  int get hashCode => id.hashCode;
 }

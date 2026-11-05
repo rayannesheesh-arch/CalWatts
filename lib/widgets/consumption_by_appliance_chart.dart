@@ -3,15 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:calwatt/models/appliance.dart';
 import 'package:calwatt/services/calculation_service.dart';
 
-/// Pie chart showing each ON appliance's share of daily kWh consumption.
-///
-/// Only appliances with isOn=true are included in the chart. Each slice
-/// represents the percentage of total household consumption for that appliance.
 class ConsumptionByApplianceChart extends StatelessWidget {
-  /// List of appliances to calculate consumption for.
   final List<Appliance> appliances;
-
-  /// Electricity rate in PHP per kWh (used for validation).
   final double electricityRate;
 
   const ConsumptionByApplianceChart({
@@ -20,166 +13,85 @@ class ConsumptionByApplianceChart extends StatelessWidget {
     required this.electricityRate,
   });
 
-  /// Calculates daily consumption for a single ON appliance.
-  double _calculateApplianceConsumption(Appliance appliance) {
-    if (!appliance.isOn) return 0.0;
-
+  double _calcKwh(Appliance a) {
+    if (!a.isOn || electricityRate <= 0) return 0;
     try {
-      final calculation = CalculationService.calculateDailyConsumptionKwh(
-        appliance,
-        electricityRate,
-      );
-      return calculation.dailyConsumptionKwh;
-    } catch (e) {
-      return 0.0;
+      return CalculationService.calculateDailyConsumptionKwh(a, electricityRate)
+              .dailyConsumptionKwh *
+          a.quantity;
+    } catch (_) {
+      return 0;
     }
+  }
+
+  Color _color(int i) {
+    const colors = [
+      Color(0xFF10B981), Color(0xFF3B82F6), Color(0xFFF59E0B),
+      Color(0xFF8B5CF6), Color(0xFFEF4444), Color(0xFF14B8A6),
+      Color(0xFFF97316), Color(0xFFEC4899),
+    ];
+    return colors[i % colors.length];
   }
 
   @override
   Widget build(BuildContext context) {
-    // Filter for ON appliances only
     final onAppliances = appliances.where((a) => a.isOn).toList();
 
     if (onAppliances.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Consumption by Appliance',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Daily kWh Share',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Text('No appliances are currently ON'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _emptyCard(context, 'No appliances are currently ON');
     }
 
-    // Calculate consumption for each ON appliance
-    final consumptionData = onAppliances
-        .map((a) => _calculateApplianceConsumption(a))
-        .toList();
+    final data = onAppliances.map(_calcKwh).toList();
+    final total = data.fold<double>(0, (s, v) => s + v);
 
-    final totalConsumption = consumptionData.fold<double>(0, (sum, val) => sum + val);
-
-    if (totalConsumption == 0) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Consumption by Appliance',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Daily kWh Share',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Text('No consumption data available'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Create pie chart sections
-    final pieSections = List.generate(onAppliances.length, (index) {
-      final consumption = consumptionData[index];
-      final percentage = (consumption / totalConsumption * 100).toStringAsFixed(1);
-      final color = _getColorForIndex(index);
-
-      return PieChartSectionData(
-        value: consumption,
-        title: '$percentage%',
-        radius: 80,
-        titleStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-        color: color,
-      );
-    });
+    if (total == 0) return _emptyCard(context, 'No consumption data');
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Consumption by Appliance',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Daily kWh Share',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
+            Text('Consumption by Appliance', style: Theme.of(context).textTheme.titleMedium),
+            Text('Daily kWh share', style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 14),
             SizedBox(
-              height: 200,
+              height: 180,
               child: PieChart(
                 PieChartData(
-                  sections: pieSections,
-                  centerSpaceRadius: 40,
+                  sections: List.generate(onAppliances.length, (i) {
+                    final pct = data[i] / total * 100;
+                    return PieChartSectionData(
+                      value: data[i],
+                      title: pct >= 5 ? '${pct.toStringAsFixed(0)}%' : '',
+                      radius: 70,
+                      titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                      color: _color(i),
+                    );
+                  }),
+                  centerSpaceRadius: 36,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Legend
+            const SizedBox(height: 12),
             Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: List.generate(onAppliances.length, (index) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _getColorForIndex(index),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      onAppliances[index].name,
+              spacing: 10,
+              runSpacing: 6,
+              children: List.generate(onAppliances.length, (i) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 10, height: 10, decoration: BoxDecoration(color: _color(i), shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 120),
+                    child: Text(
+                      onAppliances[i].name,
                       style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                );
-              }),
+                  ),
+                ],
+              )),
             ),
           ],
         ),
@@ -187,18 +99,21 @@ class ConsumptionByApplianceChart extends StatelessWidget {
     );
   }
 
-  /// Gets a distinct color for each appliance index.
-  Color _getColorForIndex(int index) {
-    final colors = [
-      Colors.green.shade400,
-      Colors.blue.shade400,
-      Colors.orange.shade400,
-      Colors.purple.shade400,
-      Colors.red.shade400,
-      Colors.teal.shade400,
-      Colors.amber.shade400,
-      Colors.pink.shade400,
-    ];
-    return colors[index % colors.length];
+  Widget _emptyCard(BuildContext context, String msg) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Consumption by Appliance', style: Theme.of(context).textTheme.titleMedium),
+            Text('Daily kWh share', style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 24),
+            Center(child: Text(msg, style: Theme.of(context).textTheme.bodyMedium)),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -3,138 +3,62 @@ import 'package:provider/provider.dart';
 import 'package:calwatt/models/appliance.dart';
 import 'package:calwatt/providers/app_state.dart';
 import 'package:calwatt/screens/add_edit_appliance_screen.dart';
+import 'package:calwatt/theme/app_theme.dart';
 
-/// Appliance management screen for adding, editing, viewing, and deleting appliances.
-///
-/// Displays a list of registered appliances with options to add new, edit, and delete.
-/// Each appliance card shows name, category icon, and wattage. Uses a floating action
-/// button to add new appliances and context menu actions for edit and delete operations.
-class AppliancesScreen extends StatefulWidget {
+class AppliancesScreen extends StatelessWidget {
   const AppliancesScreen({super.key});
 
-  @override
-  State<AppliancesScreen> createState() => _AppliancesScreenState();
-}
-
-class _AppliancesScreenState extends State<AppliancesScreen> {
-  /// Gets the icon for an appliance category.
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'fan':
-        return Icons.air;
-      case 'light':
-        return Icons.light_mode;
-      case 'television':
-        return Icons.tv;
-      case 'refrigerator':
-        return Icons.kitchen;
-      case 'riceCooker':
-        return Icons.rice_bowl;
-      case 'airConditioner':
-        return Icons.ac_unit;
-      default:
-        return Icons.devices;
-    }
-  }
-
-  /// Gets the display label for an appliance category.
-  String _getCategoryLabel(String category) {
-    switch (category) {
-      case 'fan':
-        return 'Fan';
-      case 'light':
-        return 'Light';
-      case 'television':
-        return 'Television';
-      case 'refrigerator':
-        return 'Refrigerator';
-      case 'riceCooker':
-        return 'Rice Cooker';
-      case 'airConditioner':
-        return 'Air Conditioner';
-      default:
-        return category;
-    }
-  }
-
-  /// Shows a confirmation dialog before deleting an appliance.
   void _showDeleteConfirmation(BuildContext context, Appliance appliance) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Appliance'),
-          content: Text('Are you sure you want to delete "${appliance.name}"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _deleteAppliance(context, appliance.id);
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Deletes an appliance and updates the UI.
-  Future<void> _deleteAppliance(BuildContext context, String id) async {
-    try {
-      await context.read<AppState>().deleteAppliance(id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Appliance deleted successfully'),
-            duration: Duration(seconds: 2),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Appliance'),
+        content: Text('Delete "${appliance.name}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AppState>().deleteAppliance(appliance.id);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting appliance: $e'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  /// Opens the add appliance screen.
-  void _openAddScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddEditApplianceScreen(),
+        ],
       ),
     );
   }
 
-  /// Opens the edit appliance screen.
-  void _openEditScreen(BuildContext context, Appliance appliance) {
+  void _openAdd(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => AddEditApplianceScreen(appliance: appliance),
-      ),
+      MaterialPageRoute(builder: (_) => const AddEditApplianceScreen()),
+    );
+  }
+
+  void _openEdit(BuildContext context, Appliance appliance) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AddEditApplianceScreen(appliance: appliance)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final primary = AppTheme.primaryColor(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Appliances'),
+        actions: [
+          Consumer<AppState>(
+            builder: (context, appState, _) => IconButton(
+              icon: Icon(
+                appState.isDarkMode ? Icons.wb_sunny_outlined : Icons.nightlight_round,
+              ),
+              onPressed: () => context.read<AppState>().toggleDarkMode(),
+            ),
+          ),
+        ],
       ),
       body: Consumer<AppState>(
         builder: (context, appState, _) {
@@ -143,79 +67,76 @@ class _AppliancesScreenState extends State<AppliancesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.devices_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.devices_outlined, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No appliances registered yet',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () => _openAddScreen(context),
+                    onPressed: () => _openAdd(context),
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Your First Appliance'),
+                    label: const Text('Add Appliance'),
                   ),
                 ],
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
             itemCount: appState.appliances.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 6),
             itemBuilder: (context, index) {
               final appliance = appState.appliances[index];
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ListTile(
-                  leading: Icon(
-                    _getCategoryIcon(appliance.category.name),
-                    color: Colors.green[700],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(appliance.category.icon, color: primary, size: 20),
                   ),
-                  title: Text(appliance.name),
+                  title: Text(
+                    appliance.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                   subtitle: Text(
-                    '${_getCategoryLabel(appliance.category.name)} • ${appliance.wattage.toStringAsFixed(0)} W',
+                    '${appliance.category.label} • ${appliance.wattage.toStringAsFixed(0)} W',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'edit') {
-                        _openEditScreen(context, appliance);
-                      } else if (value == 'delete') {
-                        _showDeleteConfirmation(context, appliance);
-                      }
+                      if (value == 'edit') _openEdit(context, appliance);
+                      if (value == 'delete') _showDeleteConfirmation(context, appliance);
                     },
-                    itemBuilder: (BuildContext context) => [
-                      const PopupMenuItem<String>(
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
                         value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
-                        ),
+                        child: Row(children: [
+                          Icon(Icons.edit, color: Colors.blue, size: 18),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ]),
                       ),
-                      const PopupMenuItem<String>(
+                      const PopupMenuItem(
                         value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete'),
-                          ],
-                        ),
+                        child: Row(children: [
+                          Icon(Icons.delete, color: Colors.red, size: 18),
+                          SizedBox(width: 8),
+                          Text('Delete'),
+                        ]),
                       ),
                     ],
                   ),
-                  onTap: () {
-                    _openEditScreen(context, appliance);
-                  },
+                  onTap: () => _openEdit(context, appliance),
                 ),
               );
             },
@@ -223,8 +144,9 @@ class _AppliancesScreenState extends State<AppliancesScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddScreen(context),
-        tooltip: 'Add Appliance',
+        onPressed: () => _openAdd(context),
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
     );

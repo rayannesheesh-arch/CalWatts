@@ -1,26 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:calwatt/theme/app_theme.dart';
 
-/// Reusable card widget for displaying a single metric.
-///
-/// Shows a metric with an icon, label, and large value with unit.
-/// Uses Material 3 styling with white background, subtle shadow, and green accent.
 class StatCard extends StatelessWidget {
-  /// Icon to display at the top of the card.
   final IconData icon;
-
-  /// Label describing the metric (e.g., "Est. Daily Consumption").
   final String label;
-
-  /// The main value to display (large font).
   final String value;
-
-  /// Unit of measurement (e.g., "kWh", "₱").
   final String unit;
-
-  /// Background color for the icon (defaults to light green).
   final Color? iconBackgroundColor;
-
-  /// Icon color (defaults to primary green).
   final Color? iconColor;
 
   const StatCard({
@@ -35,61 +21,53 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final primary = AppTheme.primaryColor(context);
+    final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon with circular background
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: iconBackgroundColor ?? colorScheme.primary.withOpacity(0.1),
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Icon(
-                icon,
-                color: iconColor ?? colorScheme.primary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Label
-            Text(
-              label,
-              style: textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF6B7280),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Value and unit
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  value,
-                  style: textTheme.displaySmall?.copyWith(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 28,
-                  ),
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconBackgroundColor ?? primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  unit,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF6B7280),
-                  ),
+                child: Icon(icon, color: iconColor ?? primary, size: 18),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: theme.textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      value,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(unit, style: theme.textTheme.bodyMedium),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

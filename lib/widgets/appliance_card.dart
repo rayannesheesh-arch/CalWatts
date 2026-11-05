@@ -1,203 +1,241 @@
 import 'package:flutter/material.dart';
 import 'package:calwatt/models/appliance.dart';
-import 'package:calwatt/models/appliance_category.dart';
 import 'package:calwatt/services/calculation_service.dart';
+import 'package:calwatt/theme/app_theme.dart';
 
-/// Card widget displaying an appliance with its consumption data and ON/OFF toggle.
-///
-/// Shows appliance name, category icon, wattage, calculated daily kWh and cost,
-/// and a toggle switch to turn the appliance ON/OFF. The card uses Material 3 styling.
 class ApplianceCard extends StatelessWidget {
-  /// The appliance to display.
   final Appliance appliance;
-
-  /// Electricity rate in PHP per kWh (used for cost calculation).
   final double electricityRate;
-
-  /// Callback when the ON/OFF toggle is pressed.
   final VoidCallback? onToggle;
+  final VoidCallback? onIncreaseQty;
+  final VoidCallback? onDecreaseQty;
+  final VoidCallback? onClone;
 
   const ApplianceCard({
     super.key,
     required this.appliance,
     required this.electricityRate,
     this.onToggle,
+    this.onIncreaseQty,
+    this.onDecreaseQty,
+    this.onClone,
   });
-
-  /// Gets the icon for the appliance category.
-  IconData _getCategoryIcon(ApplianceCategory category) {
-    switch (category) {
-      case ApplianceCategory.fan:
-        return Icons.air;
-      case ApplianceCategory.light:
-        return Icons.lightbulb;
-      case ApplianceCategory.television:
-        return Icons.tv;
-      case ApplianceCategory.refrigerator:
-        return Icons.kitchen;
-      case ApplianceCategory.riceCooker:
-        return Icons.rice_bowl;
-      case ApplianceCategory.airConditioner:
-        return Icons.ac_unit;
-    }
-  }
-
-  /// Gets the label for the appliance category.
-  String _getCategoryLabel(ApplianceCategory category) {
-    switch (category) {
-      case ApplianceCategory.fan:
-        return 'Fan';
-      case ApplianceCategory.light:
-        return 'Light';
-      case ApplianceCategory.television:
-        return 'TV';
-      case ApplianceCategory.refrigerator:
-        return 'Refrigerator';
-      case ApplianceCategory.riceCooker:
-        return 'Rice Cooker';
-      case ApplianceCategory.airConditioner:
-        return 'AC';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final primary = AppTheme.primaryColor(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Calculate daily consumption and cost
     double dailyKwh = 0.0;
     double dailyCost = 0.0;
-
-    try {
-      final calculation = CalculationService.calculateDailyConsumptionKwh(
-        appliance,
-        electricityRate,
-      );
-      dailyKwh = calculation.dailyConsumptionKwh;
-      dailyCost = calculation.dailyCostPhp;
-    } catch (e) {
-      // If calculation fails, display zero values
-      dailyKwh = 0.0;
-      dailyCost = 0.0;
+    if (electricityRate > 0) {
+      try {
+        final calc = CalculationService.calculateDailyConsumptionKwh(
+          appliance,
+          electricityRate,
+        );
+        dailyKwh = calc.dailyConsumptionKwh * appliance.quantity;
+        dailyCost = calc.dailyCostPhp * appliance.quantity;
+      } catch (_) {}
     }
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Name, Category, and Toggle
+            // Header row
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Category icon
                 Container(
+                  padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    _getCategoryIcon(appliance.category),
-                    color: colorScheme.primary,
-                    size: 20,
-                  ),
+                  child: Icon(appliance.category.icon, color: primary, size: 20),
                 ),
-                const SizedBox(width: 12),
-
-                // Name and Category
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         appliance.name,
-                        style: textTheme.titleLarge,
+                        style: theme.textTheme.titleMedium,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
                       Text(
-                        _getCategoryLabel(appliance.category),
-                        style: textTheme.bodySmall,
+                        appliance.category.label,
+                        style: theme.textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-
-                // ON/OFF Toggle
-                Switch(
-                  value: appliance.isOn,
-                  onChanged: (_) {
-                    onToggle?.call();
-                  },
+                // ON/OFF toggle
+                Transform.scale(
+                  scale: 0.85,
+                  child: Switch(
+                    value: appliance.isOn,
+                    onChanged: (_) => onToggle?.call(),
+                    activeThumbColor: primary,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Wattage and consumption info
+            // Stats row
             Row(
               children: [
-                // Wattage
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Wattage',
-                        style: textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${appliance.wattage.toStringAsFixed(0)} W',
-                        style: textTheme.titleLarge,
-                      ),
-                    ],
-                  ),
+                _StatChip(
+                  label: 'Wattage',
+                  value: '${(appliance.wattage * appliance.quantity).toStringAsFixed(0)} W',
+                  isDark: isDark,
                 ),
-
-                // Daily consumption
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daily Est.',
-                        style: textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${dailyKwh.toStringAsFixed(3)} kWh',
-                        style: textTheme.titleLarge,
-                      ),
-                    ],
-                  ),
+                const SizedBox(width: 8),
+                _StatChip(
+                  label: 'Daily',
+                  value: '${dailyKwh.toStringAsFixed(3)} kWh',
+                  isDark: isDark,
                 ),
+                const SizedBox(width: 8),
+                _StatChip(
+                  label: 'Cost',
+                  value: '₱${dailyCost.toStringAsFixed(2)}',
+                  valueColor: primary,
+                  isDark: isDark,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
 
-                // Daily cost
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Quantity + Clone row
+            Row(
+              children: [
+                // Quantity controls
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'Est. Cost',
-                        style: textTheme.bodySmall,
+                      _QtyButton(
+                        icon: Icons.remove,
+                        onTap: appliance.quantity > 1 ? onDecreaseQty : null,
+                        primary: primary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '₱${dailyCost.toStringAsFixed(2)}',
-                        style: textTheme.titleLarge?.copyWith(
-                          color: colorScheme.primary,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          '${appliance.quantity}',
+                          style: theme.textTheme.titleSmall,
                         ),
                       ),
+                      _QtyButton(
+                        icon: Icons.add,
+                        onTap: onIncreaseQty,
+                        primary: primary,
+                      ),
                     ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  appliance.quantity == 1 ? 'unit' : 'units',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const Spacer(),
+                // Clone button
+                TextButton.icon(
+                  onPressed: onClone,
+                  icon: const Icon(Icons.copy_all, size: 16),
+                  label: const Text('Clone'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool isDark;
+
+  const _StatChip({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: theme.textTheme.labelSmall),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: theme.textTheme.labelLarge?.copyWith(color: valueColor),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  final Color primary;
+
+  const _QtyButton({required this.icon, required this.onTap, required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(
+          icon,
+          size: 16,
+          color: onTap != null ? primary : Colors.grey,
         ),
       ),
     );

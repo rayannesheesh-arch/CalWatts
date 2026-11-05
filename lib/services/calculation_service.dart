@@ -137,9 +137,8 @@ class CalculationService {
     return appliances.fold<double>(0.0, (total, appliance) {
       try {
         final calculation = calculateDailyConsumptionKwh(appliance, rate);
-        return total + calculation.dailyConsumptionKwh;
+        return total + calculation.dailyConsumptionKwh * appliance.quantity;
       } catch (e) {
-        // Skip appliances with calculation errors
         return total;
       }
     });
@@ -167,9 +166,8 @@ class CalculationService {
     return appliances.fold<double>(0.0, (total, appliance) {
       try {
         final calculation = calculateDailyConsumptionKwh(appliance, rate);
-        return total + calculation.dailyCostPhp;
+        return total + calculation.dailyCostPhp * appliance.quantity;
       } catch (e) {
-        // Skip appliances with calculation errors
         return total;
       }
     });

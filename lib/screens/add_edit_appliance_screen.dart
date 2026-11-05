@@ -4,21 +4,11 @@ import 'package:calwatt/models/appliance.dart';
 import 'package:calwatt/models/appliance_category.dart';
 import 'package:calwatt/providers/app_state.dart';
 import 'package:calwatt/services/appliance_service.dart';
+import 'package:calwatt/theme/app_theme.dart';
 
-/// Modal or page for adding/editing an appliance.
-///
-/// Provides a form for entering appliance details including name, category,
-/// wattage, voltage, current, daily operating hours, operating days schedule,
-/// and ON/OFF status. Includes validation and a "Calculate Wattage" button
-/// for estimating watts from voltage and current.
 class AddEditApplianceScreen extends StatefulWidget {
-  /// The appliance to edit, or null to add a new appliance.
   final Appliance? appliance;
-
-  const AddEditApplianceScreen({
-    super.key,
-    this.appliance,
-  });
+  const AddEditApplianceScreen({super.key, this.appliance});
 
   @override
   State<AddEditApplianceScreen> createState() => _AddEditApplianceScreenState();
@@ -26,147 +16,113 @@ class AddEditApplianceScreen extends StatefulWidget {
 
 class _AddEditApplianceScreenState extends State<AddEditApplianceScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _wattageController;
-  late TextEditingController _voltageController;
-  late TextEditingController _currentController;
-  late TextEditingController _dailyHoursController;
+  late TextEditingController _nameCtrl;
+  late TextEditingController _wattageCtrl;
+  late TextEditingController _voltageCtrl;
+  late TextEditingController _currentCtrl;
+  late TextEditingController _hoursCtrl;
 
   late ApplianceCategory _selectedCategory;
   late List<bool> _operatingDays;
   late bool _isOn;
 
-  final List<String> _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Group categories for the dropdown
+  static final Map<String, List<ApplianceCategory>> _groups = {
+    'Household': ApplianceCategory.values.where((c) => c.groupLabel == 'Household').toList(),
+    'Computers & IT': ApplianceCategory.values.where((c) => c.groupLabel == 'Computers & IT').toList(),
+    'Warehouse & Industrial': ApplianceCategory.values.where((c) => c.groupLabel == 'Warehouse & Industrial').toList(),
+    'Commercial & Business': ApplianceCategory.values.where((c) => c.groupLabel == 'Commercial & Business').toList(),
+  };
 
   @override
   void initState() {
     super.initState();
-    final appliance = widget.appliance;
-
-    _nameController = TextEditingController(text: appliance?.name ?? '');
-    _wattageController = TextEditingController(
-      text: appliance?.wattage.toStringAsFixed(0) ?? '',
-    );
-    _voltageController = TextEditingController(
-      text: appliance?.voltage?.toStringAsFixed(0) ?? '',
-    );
-    _currentController = TextEditingController(
-      text: appliance?.current?.toStringAsFixed(2) ?? '',
-    );
-    _dailyHoursController = TextEditingController(
-      text: appliance?.dailyOperatingHours.toStringAsFixed(1) ?? '',
-    );
-
-    _selectedCategory = appliance?.category ?? ApplianceCategory.fan;
-    _operatingDays = appliance?.operatingDays ?? [true, true, true, true, true, true, true];
-    _isOn = appliance?.isOn ?? false;
+    final a = widget.appliance;
+    _nameCtrl = TextEditingController(text: a?.name ?? '');
+    _wattageCtrl = TextEditingController(text: a?.wattage.toStringAsFixed(0) ?? '');
+    _voltageCtrl = TextEditingController(text: a?.voltage?.toStringAsFixed(0) ?? '');
+    _currentCtrl = TextEditingController(text: a?.current?.toStringAsFixed(2) ?? '');
+    _hoursCtrl = TextEditingController(text: a?.dailyOperatingHours.toStringAsFixed(1) ?? '');
+    _selectedCategory = a?.category ?? ApplianceCategory.fan;
+    _operatingDays = a?.operatingDays ?? List.filled(7, true);
+    _isOn = a?.isOn ?? false;
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _wattageController.dispose();
-    _voltageController.dispose();
-    _currentController.dispose();
-    _dailyHoursController.dispose();
+    _nameCtrl.dispose();
+    _wattageCtrl.dispose();
+    _voltageCtrl.dispose();
+    _currentCtrl.dispose();
+    _hoursCtrl.dispose();
     super.dispose();
   }
 
-  /// Calculates wattage from voltage and current if both are provided.
   void _calculateWattage() {
-    final voltage = double.tryParse(_voltageController.text);
-    final current = double.tryParse(_currentController.text);
-
-    if (voltage != null && voltage > 0 && current != null && current > 0) {
-      final watts = voltage * current;
-      _wattageController.text = watts.toStringAsFixed(0);
+    final v = double.tryParse(_voltageCtrl.text);
+    final i = double.tryParse(_currentCtrl.text);
+    if (v != null && v > 0 && i != null && i > 0) {
+      _wattageCtrl.text = (v * i).toStringAsFixed(0);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Wattage calculated: ${watts.toStringAsFixed(2)} W'),
-          duration: const Duration(seconds: 2),
-        ),
+        SnackBar(content: Text('Wattage: ${(v * i).toStringAsFixed(2)} W')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide valid voltage and current values'),
-          duration: Duration(seconds: 2),
-        ),
+        const SnackBar(content: Text('Enter valid voltage and current values')),
       );
     }
   }
 
-  /// Saves the appliance (add or update).
-  Future<void> _saveAppliance() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
     try {
-      final name = _nameController.text.trim();
-      final wattage = double.parse(_wattageController.text);
-      final voltage = _voltageController.text.trim().isEmpty
-          ? null
-          : double.tryParse(_voltageController.text);
-      final current = _currentController.text.trim().isEmpty
-          ? null
-          : double.tryParse(_currentController.text);
-      final dailyHours = double.parse(_dailyHoursController.text);
-
+      final name = _nameCtrl.text.trim();
+      final wattage = double.parse(_wattageCtrl.text);
+      final voltage = _voltageCtrl.text.trim().isEmpty ? null : double.tryParse(_voltageCtrl.text);
+      final current = _currentCtrl.text.trim().isEmpty ? null : double.tryParse(_currentCtrl.text);
+      final hours = double.parse(_hoursCtrl.text);
       final isEditing = widget.appliance != null;
 
+      final appState = context.read<AppState>();
       if (isEditing) {
-        // Update existing appliance
         final updated = widget.appliance!.copyWith(
           name: name,
           category: _selectedCategory,
           wattage: wattage,
           voltage: voltage,
           current: current,
-          dailyOperatingHours: dailyHours,
+          dailyOperatingHours: hours,
           operatingDays: _operatingDays,
           isOn: _isOn,
         );
         await ApplianceService.updateAppliance(updated);
-        if (mounted) {
-          context.read<AppState>().updateAppliance(updated);
-        }
+        if (!mounted) return;
+        appState.updateAppliance(updated);
       } else {
-        // Add new appliance
         await ApplianceService.addAppliance(
           name: name,
           category: _selectedCategory,
           wattage: wattage,
           voltage: voltage,
           current: current,
-          dailyOperatingHours: dailyHours,
+          dailyOperatingHours: hours,
           operatingDays: _operatingDays,
           isOn: _isOn,
         );
-        if (mounted) {
-          await context.read<AppState>().refreshAppliances();
-        }
+        if (!mounted) return;
+        await appState.refreshAppliances();
       }
 
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isEditing
-                  ? 'Appliance updated successfully'
-                  : 'Appliance added successfully',
-            ),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isEditing ? 'Appliance updated' : 'Appliance added')),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving appliance: $e'),
-          duration: const Duration(seconds: 3),
-        ),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
@@ -174,237 +130,246 @@ class _AddEditApplianceScreenState extends State<AddEditApplianceScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.appliance != null;
+    final primary = AppTheme.primaryColor(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Appliance' : 'Add Appliance'),
-      ),
+      appBar: AppBar(title: Text(isEditing ? 'Edit Appliance' : 'Add Appliance')),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'e.g., Living Room Fan',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g., Living Room Fan'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+              ),
+              const SizedBox(height: 14),
 
-                // Category dropdown
-                DropdownButtonFormField<ApplianceCategory>(
-                  value: _selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ApplianceCategory.values.map((category) {
-                    return DropdownMenuItem(
-                      value: category,
-                      child: Text(_getCategoryLabel(category)),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
+              // Category selector with groups
+              _buildCategorySelector(context, primary),
+              const SizedBox(height: 14),
 
-                // Wattage field
-                TextFormField(
-                  controller: _wattageController,
-                  decoration: const InputDecoration(
-                    labelText: 'Wattage (W)',
-                    hintText: 'e.g., 70',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Wattage is required';
-                    }
-                    final wattage = double.tryParse(value);
-                    if (wattage == null || wattage <= 0) {
-                      return 'Wattage must be greater than 0';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+              TextFormField(
+                controller: _wattageCtrl,
+                decoration: const InputDecoration(labelText: 'Wattage (W)', hintText: 'e.g., 70', suffixText: 'W'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Wattage is required';
+                  final w = double.tryParse(v);
+                  if (w == null || w <= 0) return 'Must be greater than 0';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
 
-                // Voltage and Current row with Calculate button
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _voltageController,
-                        decoration: const InputDecoration(
-                          labelText: 'Voltage (V)',
-                          hintText: 'Optional',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _voltageCtrl,
+                      decoration: const InputDecoration(labelText: 'Voltage (V)', hintText: 'Optional'),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _currentController,
-                        decoration: const InputDecoration(
-                          labelText: 'Current (A)',
-                          hintText: 'Optional',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _currentCtrl,
+                      decoration: const InputDecoration(labelText: 'Current (A)', hintText: 'Optional'),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
 
-                // Calculate Wattage button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _calculateWattage,
-                    icon: const Icon(Icons.calculate),
-                    label: const Text('Calculate Wattage'),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _calculateWattage,
+                  icon: const Icon(Icons.calculate, size: 18),
+                  label: const Text('Calculate Wattage from V × A'),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              TextFormField(
+                controller: _hoursCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Daily Operating Hours',
+                  hintText: 'e.g., 6',
+                  suffixText: 'hrs',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Required';
+                  final h = double.tryParse(v);
+                  if (h == null || h < 0 || h > 24) return 'Must be 0–24';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
+
+              Text('Operating Days', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: List.generate(7, (i) => FilterChip(
+                  label: Text(_dayLabels[i]),
+                  selected: _operatingDays[i],
+                  onSelected: (v) => setState(() => _operatingDays[i] = v),
+                )),
+              ),
+              const SizedBox(height: 14),
+
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    children: [
+                      Text('Status', style: Theme.of(context).textTheme.titleMedium),
+                      const Spacer(),
+                      Text(
+                        _isOn ? 'ON' : 'OFF',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: _isOn ? primary : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Switch(
+                        value: _isOn,
+                        onChanged: (v) => setState(() => _isOn = v),
+                        activeThumbColor: primary,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 20),
 
-                // Daily operating hours field
-                TextFormField(
-                  controller: _dailyHoursController,
-                  decoration: const InputDecoration(
-                    labelText: 'Daily Operating Hours',
-                    hintText: 'e.g., 6 (0-24)',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Daily hours is required';
-                    }
-                    final hours = double.tryParse(value);
-                    if (hours == null || hours < 0 || hours > 24) {
-                      return 'Daily hours must be between 0 and 24';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Operating days checkboxes
-                Text(
-                  'Operating Days',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(7, (index) {
-                    return FilterChip(
-                      label: Text(_dayLabels[index]),
-                      selected: _operatingDays[index],
-                      onSelected: (selected) {
-                        setState(() {
-                          _operatingDays[index] = selected;
-                        });
-                      },
-                    );
-                  }),
-                ),
-                const SizedBox(height: 16),
-
-                // ON/OFF status toggle
-                Card(
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _save,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Status',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Switch(
-                          value: _isOn,
-                          onChanged: (value) {
-                            setState(() {
-                              _isOn = value;
-                            });
-                          },
-                        ),
-                        Text(
-                          _isOn ? 'ON' : 'OFF',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _isOn ? Colors.green : Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(isEditing ? 'Update Appliance' : 'Add Appliance'),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Save button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saveAppliance,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Text(
-                        isEditing ? 'Update Appliance' : 'Add Appliance',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),
     );
   }
 
-  /// Helper method to get display label for appliance category.
-  String _getCategoryLabel(ApplianceCategory category) {
-    switch (category) {
-      case ApplianceCategory.fan:
-        return 'Fan';
-      case ApplianceCategory.light:
-        return 'Light';
-      case ApplianceCategory.television:
-        return 'Television';
-      case ApplianceCategory.refrigerator:
-        return 'Refrigerator';
-      case ApplianceCategory.riceCooker:
-        return 'Rice Cooker';
-      case ApplianceCategory.airConditioner:
-        return 'Air Conditioner';
-    }
+  Widget _buildCategorySelector(BuildContext context, Color primary) {
+    return InkWell(
+      onTap: () => _showCategoryPicker(context, primary),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).inputDecorationTheme.fillColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          children: [
+            Icon(_selectedCategory.icon, color: primary, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Category', style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    _selectedCategory.label,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryPicker(BuildContext context, Color primary) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Select Category', style: Theme.of(context).textTheme.headlineSmall),
+            ),
+            Expanded(
+              child: ListView(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: _groups.entries.map((entry) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                        child: Text(
+                          entry.key,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: primary,
+                              ),
+                        ),
+                      ),
+                      ...entry.value.map((cat) => ListTile(
+                            dense: true,
+                            leading: Icon(cat.icon, color: primary, size: 20),
+                            title: Text(cat.label, style: Theme.of(context).textTheme.bodyLarge),
+                            trailing: _selectedCategory == cat
+                                ? Icon(Icons.check_circle, color: primary, size: 20)
+                                : null,
+                            onTap: () {
+                              setState(() => _selectedCategory = cat);
+                              Navigator.pop(ctx);
+                            },
+                          )),
+                      const Divider(),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
