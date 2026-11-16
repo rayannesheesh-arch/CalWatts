@@ -30,14 +30,12 @@ class ApplianceCard extends StatelessWidget {
     double dailyKwh = 0.0;
     double dailyCost = 0.0;
     if (electricityRate > 0) {
-      try {
-        final calc = CalculationService.calculateDailyConsumptionKwh(
-          appliance,
-          electricityRate,
-        );
-        dailyKwh = calc.dailyConsumptionKwh * appliance.quantity;
-        dailyCost = calc.dailyCostPhp * appliance.quantity;
-      } catch (_) {}
+      final calc = CalculationService.calculateDailyConsumptionKwh(
+        appliance,
+        electricityRate,
+      );
+      dailyKwh = calc.dailyConsumptionKwh * appliance.quantity;
+      dailyCost = calc.dailyCostPhp * appliance.quantity;
     }
 
     return Card(
@@ -56,7 +54,11 @@ class ApplianceCard extends StatelessWidget {
                     color: primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(appliance.category.icon, color: primary, size: 20),
+                  child: Icon(
+                    appliance.category.icon,
+                    color: primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -95,7 +97,8 @@ class ApplianceCard extends StatelessWidget {
               children: [
                 _StatChip(
                   label: 'Wattage',
-                  value: '${(appliance.wattage * appliance.quantity).toStringAsFixed(0)} W',
+                  value:
+                      '${(appliance.wattage * appliance.quantity).toStringAsFixed(0)} W',
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
@@ -122,7 +125,9 @@ class ApplianceCard extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFE5E7EB),
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -161,8 +166,14 @@ class ApplianceCard extends StatelessWidget {
                   icon: const Icon(Icons.copy_all, size: 16),
                   label: const Text('Clone'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -223,7 +234,11 @@ class _QtyButton extends StatelessWidget {
   final VoidCallback? onTap;
   final Color primary;
 
-  const _QtyButton({required this.icon, required this.onTap, required this.primary});
+  const _QtyButton({
+    required this.icon,
+    required this.onTap,
+    required this.primary,
+  });
 
   @override
   Widget build(BuildContext context) {

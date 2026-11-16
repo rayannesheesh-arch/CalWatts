@@ -1,11 +1,11 @@
 {
-    "name": "calwatt",
-    "short_name": "calwatt",
+    "name": "CalWatt",
+    "short_name": "CalWatt",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8FAFC",
+    "theme_color": "#10B981",
+    "description": "CalWatt estimates household electricity use and cost.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

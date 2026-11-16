@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:calwatt/models/appliance.dart';
 import 'package:calwatt/models/appliance_category.dart';
 import 'package:calwatt/providers/app_state.dart';
-import 'package:calwatt/services/appliance_service.dart';
 import 'package:calwatt/theme/app_theme.dart';
 
 class AddEditApplianceScreen extends StatefulWidget {
@@ -97,11 +96,9 @@ class _AddEditApplianceScreenState extends State<AddEditApplianceScreen> {
           operatingDays: _operatingDays,
           isOn: _isOn,
         );
-        await ApplianceService.updateAppliance(updated);
-        if (!mounted) return;
-        appState.updateAppliance(updated);
+        await appState.updateAppliance(updated);
       } else {
-        await ApplianceService.addAppliance(
+        await appState.addAppliance(
           name: name,
           category: _selectedCategory,
           wattage: wattage,
@@ -111,8 +108,6 @@ class _AddEditApplianceScreenState extends State<AddEditApplianceScreen> {
           operatingDays: _operatingDays,
           isOn: _isOn,
         );
-        if (!mounted) return;
-        await appState.refreshAppliances();
       }
 
       if (!mounted) return;

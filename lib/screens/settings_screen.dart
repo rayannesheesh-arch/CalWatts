@@ -11,46 +11,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late TextEditingController _rateCtrl;
-  bool _isSaving = false;
-  String? _errorMsg;
-  String? _successMsg;
-
-  @override
-  void initState() {
-    super.initState();
-    final rate = context.read<AppState>().electricityRate;
-    _rateCtrl = TextEditingController(text: rate.toStringAsFixed(2));
-  }
-
-  @override
-  void dispose() {
-    _rateCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    setState(() { _errorMsg = null; _successMsg = null; _isSaving = true; });
-    try {
-      final text = _rateCtrl.text.trim();
-      if (text.isEmpty) throw FormatException('empty');
-      final rate = double.parse(text);
-      if (rate <= 0) {
-        setState(() { _errorMsg = 'Rate must be greater than 0'; _isSaving = false; });
-        return;
-      }
-      await context.read<AppState>().setElectricityRate(rate);
-      setState(() { _successMsg = 'Rate saved successfully'; _isSaving = false; });
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) setState(() => _successMsg = null);
-      });
-    } on FormatException {
-      setState(() { _errorMsg = 'Please enter a valid number'; _isSaving = false; });
-    } catch (e) {
-      setState(() { _errorMsg = 'Error: $e'; _isSaving = false; });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final primary = AppTheme.primaryColor(context);
@@ -94,46 +54,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Electricity Rate
-            Text('Electricity Rate', style: theme.textTheme.headlineSmall),
+            Text('Account & Sync', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 10),
             Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Consumer<AppState>(
+                builder: (context, appState, _) => Column(
                   children: [
-                    Text(
-                      'Set the electricity rate for your area. Used for all cost calculations.',
-                      style: theme.textTheme.bodyMedium,
+                    ListTile(
+                      leading: Icon(Icons.person_outline, color: primary),
+                      title: Text(appState.currentUser?['fullName']?.toString() ?? 'CalWatt account'),
+                      subtitle: Text(appState.currentUser?['email']?.toString() ?? ''),
                     ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _rateCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Electricity Rate',
-                        hintText: '12.0',
-                        suffixText: '₱/kWh',
+                    ListTile(
+                      leading: Icon(
+                        appState.isOnline ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+                        color: appState.isOnline ? primary : theme.colorScheme.error,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_errorMsg != null)
-                      _MessageBox(message: _errorMsg!, isError: true),
-                    if (_successMsg != null)
-                      _MessageBox(message: _successMsg!, isError: false),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _save,
-                        child: _isSaving
+                      title: Text(appState.isOnline ? 'Connected' : 'Offline'),
+                      subtitle: Text(
+                        appState.pendingChangesCount == 0
+                            ? 'All changes are synced'
+                            : '${appState.pendingChangesCount} change(s) waiting to sync',
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'Sync now',
+                        onPressed: appState.isSyncing ? null : appState.syncNow,
+                        icon: appState.isSyncing
                             ? const SizedBox(
-                                height: 18, width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text('Save Rate'),
+                            : const Icon(Icons.sync),
                       ),
+                    ),
+                    if (appState.syncError != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            appState.syncError!,
+                            style: TextStyle(color: theme.colorScheme.error),
+                          ),
+                        ),
+                      ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(Icons.bolt_outlined, color: primary),
+                      title: const Text('Electricity rate'),
+                      subtitle: const Text('Managed by your CalWatt administrator'),
+                      trailing: Text('₱${appState.electricityRate.toStringAsFixed(2)}/kWh'),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(Icons.logout, color: primary),
+                      title: const Text('Sign out'),
+                      onTap: appState.logout,
                     ),
                   ],
                 ),
@@ -222,28 +199,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MessageBox extends StatelessWidget {
-  final String message;
-  final bool isError;
-  const _MessageBox({required this.message, required this.isError});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isError ? Colors.red : Colors.green;
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(message, style: TextStyle(color: color.shade700, fontSize: 13)),
     );
   }
 }

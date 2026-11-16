@@ -14,25 +14,21 @@ class MonthlyProjectionChart extends StatelessWidget {
     required this.electricityRate,
   });
 
-  double _calcDay(int dayOfMonth) {
-    final dow = dayOfMonth % 7;
-    double total = 0;
-    for (final a in appliances) {
-      if (!a.isOn) continue;
-      if (!a.operatingDays[dow]) continue;
-      try {
-        final kw = CalculationService.kWFromWatts(a.wattage);
-        total += CalculationService.kWhFromKwAndHours(kw, a.dailyOperatingHours) * a.quantity;
-      } catch (_) {}
-    }
-    return total;
-  }
-
   @override
   Widget build(BuildContext context) {
     final primary = AppTheme.primaryColor(context);
-    final spots = List.generate(30, (i) => FlSpot(i.toDouble(), _calcDay(i)));
-    final maxY = spots.every((s) => s.y == 0) ? 10.0 : spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.25;
+    final today = DateTime.now();
+    final spots = List.generate(30, (i) {
+      final date = today.add(Duration(days: i));
+      final kwh = CalculationService.calculateHouseholdConsumptionForDay(
+        appliances,
+        date.weekday - 1,
+      );
+      return FlSpot(i.toDouble(), kwh);
+    });
+    final maxY = spots.every((s) => s.y == 0)
+        ? 10.0
+        : spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.25;
 
     return Card(
       child: Padding(
@@ -40,8 +36,14 @@ class MonthlyProjectionChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Monthly Projection', style: Theme.of(context).textTheme.titleMedium),
-            Text('30-day trend (kWh)', style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'Monthly Projection',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              '30-day trend (kWh)',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 14),
             SizedBox(
               height: 180,
@@ -68,7 +70,10 @@ class MonthlyProjectionChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 36,
-                        getTitlesWidget: (v, _) => Text(v.toStringAsFixed(1), style: const TextStyle(fontSize: 9)),
+                        getTitlesWidget: (v, _) => Text(
+                          v.toStringAsFixed(1),
+                          style: const TextStyle(fontSize: 9),
+                        ),
                       ),
                     ),
                     bottomTitles: AxisTitles(
@@ -83,8 +88,12 @@ class MonthlyProjectionChart extends StatelessWidget {
                         },
                       ),
                     ),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   borderData: FlBorderData(show: false),
                 ),

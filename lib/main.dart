@@ -7,6 +7,8 @@ import 'package:calwatt/screens/appliances_screen.dart';
 import 'package:calwatt/screens/analytics_screen.dart';
 import 'package:calwatt/screens/settings_screen.dart';
 import 'package:calwatt/screens/simulation_screen.dart';
+import 'package:calwatt/widgets/calwatt_logo_mark.dart';
+import 'package:calwatt/screens/auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,13 +47,27 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AppState>().initialize();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<AppState>().syncNow();
+    }
   }
 
   static const _screens = [
@@ -100,7 +116,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.bolt, size: 48, color: AppTheme.primaryColor(context)),
+                  const CalWattLogoMark(size: 56),
                   const SizedBox(height: 16),
                   const CircularProgressIndicator(),
                 ],
@@ -108,6 +124,8 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
+
+        if (!appState.isAuthenticated) return const AuthScreen();
 
         return Scaffold(
           body: IndexedStack(

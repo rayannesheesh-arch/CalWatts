@@ -5,6 +5,7 @@ import 'package:calwatt/services/calculation_service.dart';
 import 'package:calwatt/widgets/stat_card.dart';
 import 'package:calwatt/widgets/appliance_card.dart';
 import 'package:calwatt/theme/app_theme.dart';
+import 'package:calwatt/widgets/calwatt_logo_mark.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -26,15 +27,17 @@ class DashboardScreen extends StatelessWidget {
           appBar: AppBar(
             title: Row(
               children: [
-                Icon(Icons.bolt, color: AppTheme.primaryColor(context), size: 22),
-                const SizedBox(width: 6),
+                const CalWattLogoMark(size: 30),
+                const SizedBox(width: 9),
                 const Text('CalWatt'),
               ],
             ),
             actions: [
               IconButton(
                 icon: Icon(
-                  appState.isDarkMode ? Icons.wb_sunny_outlined : Icons.nightlight_round,
+                  appState.isDarkMode
+                      ? Icons.wb_sunny_outlined
+                      : Icons.nightlight_round,
                 ),
                 tooltip: appState.isDarkMode ? 'Light Mode' : 'Dark Mode',
                 onPressed: () => context.read<AppState>().toggleDarkMode(),
@@ -46,8 +49,7 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (rate <= 0)
-                  _RateWarning(context: context),
+                if (rate <= 0) _RateWarning(context: context),
 
                 // Stats grid
                 Column(
@@ -113,9 +115,13 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor(context).withValues(alpha: 0.12),
+                        color: AppTheme.primaryColor(context)
+                            .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -138,20 +144,25 @@ class DashboardScreen extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: appState.appliances.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final appliance = appState.appliances[index];
                       return ApplianceCard(
                         appliance: appliance,
                         electricityRate: rate,
-                        onToggle: () =>
-                            context.read<AppState>().toggleAppliance(appliance.id),
-                        onIncreaseQty: () =>
-                            context.read<AppState>().increaseQuantity(appliance.id),
-                        onDecreaseQty: () =>
-                            context.read<AppState>().decreaseQuantity(appliance.id),
-                        onClone: () =>
-                            context.read<AppState>().cloneAppliance(appliance.id),
+                        onToggle: () => context
+                            .read<AppState>()
+                            .toggleAppliance(appliance.id),
+                        onIncreaseQty: () => context
+                            .read<AppState>()
+                            .increaseQuantity(appliance.id),
+                        onDecreaseQty: () => context
+                            .read<AppState>()
+                            .decreaseQuantity(appliance.id),
+                        onClone: () => context.read<AppState>().cloneAppliance(
+                          appliance.id,
+                        ),
                       );
                     },
                   ),
@@ -165,18 +176,10 @@ class DashboardScreen extends StatelessWidget {
 
   double _householdDailyKwh(AppState appState) {
     if (appState.electricityRate <= 0) return 0;
-    double total = 0;
-    for (final a in appState.appliances) {
-      if (!a.isOn) continue;
-      try {
-        final calc = CalculationService.calculateDailyConsumptionKwh(
-          a,
-          appState.electricityRate,
-        );
-        total += calc.dailyConsumptionKwh * a.quantity;
-      } catch (_) {}
-    }
-    return total;
+    return CalculationService.getHouseholdDaily(
+      appState.appliances,
+      appState.electricityRate,
+    );
   }
 }
 
@@ -196,14 +199,17 @@ class _RateWarning extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 18),
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.amber,
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Electricity rate not set. Go to Settings to configure it.',
-              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                    color: Colors.amber.shade800,
-                  ),
+              style: Theme.of(ctx).textTheme.bodySmall
+                  ?.copyWith(color: Colors.amber.shade800),
             ),
           ),
         ],

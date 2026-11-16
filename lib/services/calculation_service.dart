@@ -12,7 +12,8 @@ import 'package:calwatt/models/energy_calculation.dart';
 /// - kW = Watts / 1000
 /// - kWh = kW × Operating Hours
 /// - Estimated Cost = kWh × Electricity Rate (in PHP per kWh)
-/// - Monthly = Daily × 30
+/// - Scheduled daily average = weekly scheduled use / 7
+/// - Monthly projection = scheduled daily average × 30
 class CalculationService {
   /// Prevents instantiation of this utility class.
   CalculationService._();
@@ -64,7 +65,10 @@ class CalculationService {
   /// Formula: Watts = Voltage × Current
   ///
   /// Throws [ArgumentError] if voltage or current is negative or zero.
-  static double calculateWattageFromVoltageAndCurrent(double voltage, double current) {
+  static double calculateWattageFromVoltageAndCurrent(
+    double voltage,
+    double current,
+  ) {
     if (voltage <= 0) {
       throw ArgumentError('Voltage must be greater than 0');
     }
@@ -74,7 +78,7 @@ class CalculationService {
     return voltage * current;
   }
 
-  /// Calculates daily energy consumption and cost for a single appliance.
+  /// Calculates the average daily energy consumption and cost for one appliance.
   ///
   /// Returns an [EnergyCalculation] containing:
   /// - Daily consumption in kWh
@@ -82,8 +86,8 @@ class CalculationService {
   /// - Monthly projection (daily × 30)
   /// - Monthly cost projection
   ///
-  /// The calculation uses the appliance's wattage and dailyOperatingHours.
-  /// If the appliance is OFF (isOn == false), consumption and cost are zero.
+  /// Operating days are averaged across the week to match web dashboard estimates.
+  /// The returned values are per unit; household aggregations apply quantity.
   ///
   /// Throws [ArgumentError] if rate is negative or zero, or if appliance properties are invalid.
   static EnergyCalculation calculateDailyConsumptionKwh(
@@ -94,23 +98,9 @@ class CalculationService {
       throw ArgumentError('Electricity rate must be greater than 0');
     }
 
-    // If appliance is off, consumption is zero
-    if (!appliance.isOn) {
-      return EnergyCalculation(
-        dailyConsumptionKwh: 0.0,
-        dailyCostPhp: 0.0,
-        monthlyConsumptionKwh: 0.0,
-        monthlyCostPhp: 0.0,
-        appliance: appliance,
-      );
-    }
-
-    // Calculate daily consumption: kW = Watts / 1000, then kWh = kW × hours
-    final kw = kWFromWatts(appliance.wattage);
-    final dailyKwh = kWhFromKwAndHours(kw, appliance.dailyOperatingHours);
+    final dailyKwh = calculateAverageDailyKwh(appliance);
     final dailyCost = costFromKwhAndRate(dailyKwh, rate);
 
-    // Calculate monthly projection (daily × 30)
     final monthlyKwh = dailyKwh * 30;
     final monthlyCost = dailyCost * 30;
 
@@ -120,6 +110,48 @@ class CalculationService {
       monthlyConsumptionKwh: monthlyKwh,
       monthlyCostPhp: monthlyCost,
       appliance: appliance,
+    );
+  }
+
+  /// Returns an appliance's per-unit consumption for one Monday-based weekday.
+  static double calculateScheduledDailyKwh(Appliance appliance, int dayOfWeek) {
+    if (dayOfWeek < 0 || dayOfWeek > 6) {
+      throw ArgumentError(
+        'Day of week must be between 0 (Monday) and 6 (Sunday)',
+      );
+    }
+    if (appliance.operatingDays.length != 7) {
+      throw ArgumentError('Operating days must contain seven values');
+    }
+    if (!appliance.isOn || !appliance.operatingDays[dayOfWeek]) return 0;
+    final kw = kWFromWatts(appliance.wattage);
+    return kWhFromKwAndHours(kw, appliance.dailyOperatingHours);
+  }
+
+  /// Returns weekly scheduled consumption averaged across seven days, per unit.
+  static double calculateAverageDailyKwh(Appliance appliance) {
+    if (appliance.operatingDays.length != 7) {
+      throw ArgumentError('Operating days must contain seven values');
+    }
+    if (!appliance.isOn) return 0;
+    final scheduledDays = appliance.operatingDays.where((day) => day).length;
+    final dailyKwh = kWhFromKwAndHours(
+      kWFromWatts(appliance.wattage),
+      appliance.dailyOperatingHours,
+    );
+    return dailyKwh * scheduledDays / 7;
+  }
+
+  /// Calculates household use for a Monday-based weekday, including quantities.
+  static double calculateHouseholdConsumptionForDay(
+    List<Appliance> appliances,
+    int dayOfWeek,
+  ) {
+    return appliances.fold<double>(
+      0,
+      (total, appliance) =>
+          total +
+          calculateScheduledDailyKwh(appliance, dayOfWeek) * appliance.quantity,
     );
   }
 
@@ -134,14 +166,11 @@ class CalculationService {
       throw ArgumentError('Electricity rate must be greater than 0');
     }
 
-    return appliances.fold<double>(0.0, (total, appliance) {
-      try {
-        final calculation = calculateDailyConsumptionKwh(appliance, rate);
-        return total + calculation.dailyConsumptionKwh * appliance.quantity;
-      } catch (e) {
-        return total;
-      }
-    });
+    return appliances.fold<double>(
+      0,
+      (total, appliance) =>
+          total + calculateAverageDailyKwh(appliance) * appliance.quantity,
+    );
   }
 
   /// Aggregates monthly energy consumption projection across all appliances.
@@ -163,20 +192,16 @@ class CalculationService {
       throw ArgumentError('Electricity rate must be greater than 0');
     }
 
-    return appliances.fold<double>(0.0, (total, appliance) {
-      try {
-        final calculation = calculateDailyConsumptionKwh(appliance, rate);
-        return total + calculation.dailyCostPhp * appliance.quantity;
-      } catch (e) {
-        return total;
-      }
-    });
+    return getHouseholdDaily(appliances, rate) * rate;
   }
 
   /// Calculates household monthly electricity cost projection.
   ///
   /// Returns the total estimated monthly cost in Philippine pesos (₱).
-  static double getHouseholdMonthlyCost(List<Appliance> appliances, double rate) {
+  static double getHouseholdMonthlyCost(
+    List<Appliance> appliances,
+    double rate,
+  ) {
     final dailyCost = getHouseholdDailyCost(appliances, rate);
     return dailyCost * 30;
   }
@@ -199,8 +224,7 @@ class CalculationService {
   ) {
     final dailySavingsKwh =
         original.dailyConsumptionKwh - proposed.dailyConsumptionKwh;
-    final monthlySavingsPhp =
-        original.monthlyCostPhp - proposed.monthlyCostPhp;
+    final monthlySavingsPhp = original.monthlyCostPhp - proposed.monthlyCostPhp;
 
     return {
       'originalDailyKwh': original.dailyConsumptionKwh,

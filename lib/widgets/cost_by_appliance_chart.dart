@@ -16,12 +16,11 @@ class CostByApplianceChart extends StatelessWidget {
 
   double _calcCost(Appliance a) {
     if (!a.isOn || electricityRate <= 0) return 0;
-    try {
-      return CalculationService.calculateDailyConsumptionKwh(a, electricityRate).dailyCostPhp *
-          a.quantity;
-    } catch (_) {
-      return 0;
-    }
+    return CalculationService.calculateDailyConsumptionKwh(
+          a,
+          electricityRate,
+        ).dailyCostPhp *
+        a.quantity;
   }
 
   @override
@@ -33,8 +32,9 @@ class CostByApplianceChart extends StatelessWidget {
       return _emptyCard(context);
     }
 
-    final costData = onAppliances.map((a) => (appliance: a, cost: _calcCost(a))).toList()
-      ..sort((a, b) => b.cost.compareTo(a.cost));
+    final costData =
+        onAppliances.map((a) => (appliance: a, cost: _calcCost(a))).toList()
+          ..sort((a, b) => b.cost.compareTo(a.cost));
 
     final maxY = costData.every((d) => d.cost == 0)
         ? 10.0
@@ -46,31 +46,45 @@ class CostByApplianceChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Cost by Appliance', style: Theme.of(context).textTheme.titleMedium),
-            Text('Daily cost (₱)', style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'Cost by Appliance',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              'Daily cost (₱)',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 14),
             SizedBox(
               height: 180,
               child: BarChart(
                 BarChartData(
                   maxY: maxY,
-                  barGroups: List.generate(costData.length, (i) => BarChartGroupData(
-                    x: i,
-                    barRods: [
-                      BarChartRodData(
-                        toY: costData[i].cost,
-                        color: primary,
-                        width: costData.length > 6 ? 8 : 14,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                      ),
-                    ],
-                  )),
+                  barGroups: List.generate(
+                    costData.length,
+                    (i) => BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: costData[i].cost,
+                          color: primary,
+                          width: costData.length > 6 ? 8 : 14,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 40,
-                        getTitlesWidget: (v, _) => Text('₱${v.toStringAsFixed(0)}', style: const TextStyle(fontSize: 9)),
+                        getTitlesWidget: (v, _) => Text(
+                          '₱${v.toStringAsFixed(0)}',
+                          style: const TextStyle(fontSize: 9),
+                        ),
                       ),
                     ),
                     bottomTitles: AxisTitles(
@@ -96,8 +110,12 @@ class CostByApplianceChart extends StatelessWidget {
                         },
                       ),
                     ),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   borderData: FlBorderData(show: false),
                   gridData: const FlGridData(show: false),
@@ -118,10 +136,21 @@ class CostByApplianceChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Cost by Appliance', style: Theme.of(context).textTheme.titleMedium),
-            Text('Daily cost (₱)', style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'Cost by Appliance',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              'Daily cost (₱)',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 24),
-            Center(child: Text('No appliances are currently ON', style: Theme.of(context).textTheme.bodyMedium)),
+            Center(
+              child: Text(
+                'No appliances are currently ON',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),

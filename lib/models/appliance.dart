@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:calwatt/models/appliance_category.dart';
 
 /// Immutable model representing an electrical appliance.
@@ -87,6 +89,30 @@ class Appliance {
       isOn: json['isOn'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
       quantity: (json['quantity'] as int?) ?? 1,
+    );
+  }
+
+  static Appliance fromServerJson(Map<String, dynamic> json) {
+    final daysValue = json['operatingDays'];
+    final days = daysValue is String
+        ? List<bool>.from(jsonDecode(daysValue) as List)
+        : List<bool>.from(daysValue as List);
+    final createdAtValue = json['createdAt'];
+    return Appliance(
+      id: json['id'].toString(),
+      name: json['name'] as String,
+      category: ApplianceCategory.values.firstWhere(
+        (category) => category.name == json['category'],
+        orElse: () => ApplianceCategory.fan,
+      ),
+      wattage: (json['wattage'] as num).toDouble(),
+      dailyOperatingHours: (json['dailyOperatingHours'] as num).toDouble(),
+      operatingDays: days,
+      isOn: json['isOn'] == true || json['isOn'] == 1,
+      createdAt: createdAtValue == null
+          ? DateTime.now()
+          : DateTime.tryParse(createdAtValue.toString()) ?? DateTime.now(),
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
     );
   }
 
